@@ -15,11 +15,6 @@ on:
 permissions:
   contents: write
 
-# 并发控制：防止多个工作流实例同时运行
-concurrency:
-  group: ${{ github.repository }}-xserver-runner
-  cancel-in-progress: true
-
 jobs:
   run:
     runs-on: ubuntu-latest
