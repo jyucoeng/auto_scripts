@@ -121,11 +121,9 @@ jobs:
         run: |
           OUTPUT_DIR="${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}"
           if [ -d "$OUTPUT_DIR/screenshots" ]; then
-            echo "🧹 清理截图文件..."
-            rm -f "$OUTPUT_DIR/screenshots"/*.png
-            echo "✅ 截图文件已清理"
+            echo "📸 截图文件已保存，不删除"
           else
-            echo "⚠️ 截图目录不存在，无需清理"
+            echo "⚠️ 截图目录不存在"
           fi
 
       # 步骤 10: 提交时间文件到公开库
