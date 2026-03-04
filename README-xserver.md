@@ -49,20 +49,14 @@ GITHUB_TOKEN 不用你手动创建 —— 只要你的 workflow 在 GitHub Actio
 然后保存
 
 ## 3、关闭网站里的账号敏感通知。
-3.1） 打开小日子游戏机网页登录地址进行登录
-
-
-<img width="702" height="462" alt="CleanShot 2026-02-10 at 08 10 04" src="https://github.com/user-attachments/assets/33f2e9d3-0ba5-40e8-bbdb-6d106d2c7d42" />
-
-<img width="1096" height="270" alt="CleanShot 2026-02-10 at 08 14 08" src="https://github.com/user-attachments/assets/42b41c6c-ccb0-4213-9660-cbda2f4908fa" />
-
+3.1） 打开小日子游戏机网页登录地址进行登录，然后按照下图设置
+<img width="1023" height="723" alt="CleanShot 2026-03-04 at 12 54 33" src="https://github.com/user-attachments/assets/a157bfb6-74e6-4f3e-ae26-5a815eb53daf" />
 
 
 ## 4、修改定时任务执行时间。
 ### main.yml里面修改你的定时任务的执行时间（建议根据你自己下面的到期时间去调整定时。）
 
-<img width="581" height="105" alt="CleanShot 2026-02-10 at 08 15 53" src="https://github.com/user-attachments/assets/c5ff16ab-842b-48b0-a09b-f2137f199f4c" />
-
+<img width="629" height="128" alt="CleanShot 2026-03-04 at 12 56 50" src="https://github.com/user-attachments/assets/cd68b91a-c4bc-4740-9322-baaf194e8e0e" />
 
 
 
