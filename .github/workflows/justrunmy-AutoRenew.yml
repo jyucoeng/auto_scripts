@@ -11,6 +11,7 @@ on:
 # 权限配置：允许提交和推送更改
 permissions:
   contents: write
+  actions: write
 
 jobs:
   run:
