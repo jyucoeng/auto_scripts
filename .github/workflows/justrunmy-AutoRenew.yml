@@ -43,7 +43,7 @@ jobs:
       # ❗ 不建议修改：除非你知道自己在做什么
       PRIVATE_REPO: jyucoeng/auto-justrunmy-private   # 私有仓库地址
       PRIVATE_REPO_BRANCH: main                       # 私有仓库分支
-      SCRIPT_NAME: justrunmy_renew.py                 # 脚本文件名
+      SCRIPT_NAME: renew.py                 # 脚本文件名
 
       # ❌ 不可修改：这些配置与项目结构强相关
       PROJECT_DIR: justrunmy                          # 项目目录名
