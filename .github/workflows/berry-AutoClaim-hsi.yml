@@ -2,7 +2,7 @@ name: 🔄 BerryHost Auto Claim的另外一个账号hsi
 on:
   workflow_dispatch:
   schedule:
-    - cron: '23 0 * * *'   # 每天 UTC 00:23（北京时间 08:23）
+    - cron: '11 10 * * *'   
 env:
   PROJECT_DIR: berryhsi
   BERRY_BATCH_ACCOUNTS: ${{ secrets.BERRY_BATCH_ACCOUNTS_HSI }}
