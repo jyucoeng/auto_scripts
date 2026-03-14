@@ -28,8 +28,7 @@ token2,session_id2,tg_token2,tg_chat_id2
 2、发 TG：email,password,tg_bot_token,tg_chat_id
 
 
-
-https://github.com/jyucoeng/auto_scripts/blob/main/images/berry_session_id.png
+![Berry Session ID](https://github.com/jyucoeng/auto_scripts/blob/main/images/berry_session_id.png)
 
 
 - HY2_PROXY_URL （可选，Hysteria2 代理 URL，）
