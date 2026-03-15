@@ -14,7 +14,7 @@ on:
 permissions:
   contents: write
 concurrency:
-  group: kata-claim
+  group: kata-renew
   cancel-in-progress: false
 
 jobs:
