@@ -1,4 +1,4 @@
-name: 🔄 FreezeHost 自动续期
+name: 🔄 FreezeHost Auto Renew
 on:
   schedule:
     - cron: '23 1 */2 * *'
