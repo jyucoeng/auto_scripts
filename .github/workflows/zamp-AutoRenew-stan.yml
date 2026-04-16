@@ -1,0 +1,133 @@
+name: 🔄 Zampto Auto Renew
+
+on:
+  # 手动触发
+  workflow_dispatch:
+  
+  # 定时触发
+  schedule:
+    - cron: "01 * */12 * *"
+
+# 权限配置：允许提交和推送更改
+permissions:
+  contents: write
+concurrency:
+  group: zampto-renew
+  cancel-in-progress: false  
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      PROJECT_DIR: zamptoStan
+      SCRIPT_NAME: zampto-renew.py
+      SCRIPT_DESC: Zampto-stan 续期脚本
+    
+    steps:
+      # 步骤 1: 检出公开仓库
+      - name: 📥 检出公开仓库
+        uses: actions/checkout@v4
+      
+      # 步骤 1.5: 创建输出目录
+      - name: 📁 创建输出目录
+        run: |
+          mkdir -p ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}/screenshots
+
+      # 步骤 2: 检出私有仓库
+      - name: 🔐 检出私有仓库
+        uses: actions/checkout@v4
+        with:
+          repository: jyucoeng/auto_zampto_private
+          token: ${{ secrets.PRIVATE_REPO_TOKEN }}
+          ref: main
+          path: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}
+          fetch-depth: 1
+
+      # 步骤 2: 设置 Python 环境
+      - name: 🐍 设置 Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      # 步骤 3: 安装系统依赖
+      - name: 📦 安装系统依赖
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb fonts-noto-cjk
+
+      # 步骤 4: 安装 Python 依赖
+      - name: 📚 安装 Python 依赖
+        run: |
+          pip install --upgrade pip
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          else
+            pip install requests seleniumbase pyvirtualdisplay
+          fi
+
+      # 步骤 5: 安装 Hysteria2（如果需要代理）
+      - name: 📡 安装 Hysteria2
+        run: |
+          if [ -n "${{ secrets.ZAMPTO_HY2_PROXY_URL }}" ]; then
+            echo "安装 Hysteria2..."
+            curl -L -o hysteria \
+              https://github.com/apernet/hysteria/releases/latest/download/hysteria-linux-amd64
+            chmod +x hysteria
+            sudo mv hysteria /usr/local/bin/hysteria
+            hysteria version
+            echo "✅ Hysteria2 安装完成"
+          else
+            echo "⚠️ 未配置代理，跳过 Hysteria2 安装"
+          fi
+
+      # 步骤 6: 添加随机延迟
+      - name: ⏳ 添加随机延迟
+        run: |
+          delay=$((RANDOM % 120))
+          echo "随机延迟: ${delay}秒"
+          sleep $delay
+
+      # 步骤 7: 执行脚本
+      - name: 🚀 执行 ${{ env.SCRIPT_DESC }}
+        env:
+          ZAMPTO_BATCH: ${{ secrets.ZAMPTO_BATCH_STAN }}
+          HY2_PROXY_URL: ${{ secrets.ZAMPTO_HY2_PROXY_URL }}
+          SOCKS_PORT: ${{ secrets.SOCKS_PORT || '51080' }}
+          SCREENSHOT_DIR: "screenshots"
+        run: xvfb-run -a python ${{ env.SCRIPT_NAME }}
+        working-directory: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}
+
+      # 步骤 8: 上传截图
+      - name: 📸 上传截图
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zampto-screenshots-${{ github.run_id }}
+          path: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}/screenshots/
+          retention-days: 7
+
+      # 步骤 8.5: 清理本地截图
+      - name: 🗑️ 清理本地截图
+        if: always()
+        run: |
+          if [ -d "${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}/screenshots" ]; then
+            rm -rf ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}/screenshots/*
+            echo "✅ 本地截图已清理"
+          fi
+
+      # 步骤 9: 提交时间文件到公开库
+      - name: ⏱️ 提交执行时间
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          mkdir -p ${{ env.PROJECT_DIR }} && echo "$(date +'%Y-%m-%d %H:%M:%S')" > ${{ env.PROJECT_DIR }}/time.txt
+          git add ${{ env.PROJECT_DIR }}/time.txt 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "无变化，无需提交"
+          else
+            git commit -m "⏱️ 更新时间文件: $(date +'%Y-%m-%d %H:%M:%S')"
+            git pull --rebase origin main  # 拉取远程更新
+            git push origin HEAD:main
+          fi
