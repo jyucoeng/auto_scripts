@@ -6,7 +6,7 @@ on:
   
   # 定时触发
   schedule:
-    - cron: "01 * */8 * *"
+    - cron: "01 */8 * * *"
 
 # 权限配置：允许提交和推送更改
 permissions:
