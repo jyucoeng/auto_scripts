@@ -89,12 +89,14 @@ jobs:
 
       - name: 压缩截图
         if: always()
+        working-directory: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}
         run: |
-          SCREENSHOT_PATH="${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}/${{ env.SCREENSHOT_DIR }}"
-          if [ -d "$SCREENSHOT_PATH" ] && [ "$(ls -A $SCREENSHOT_PATH 2>/dev/null)" ]; then
-            cd "${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}"
-            zip -r screenshots-${{ github.run_id }}.zip ${{ env.SCREENSHOT_DIR }}/
-            echo "✅ 截图已压缩为 screenshots-${{ github.run_id }}.zip"
+          if [ -d "${{ env.SCREENSHOT_DIR }}" ] && [ "$(ls -A ${{ env.SCREENSHOT_DIR }} 2>/dev/null)" ]; then
+            zip -r screenshots.zip ${{ env.SCREENSHOT_DIR }}/
+            echo "✅ 截图已压缩为 screenshots.zip"
+            ls -la screenshots.zip
+          else
+            echo "无截图，跳过压缩"
           fi
 
       - name: 上传截图
@@ -102,7 +104,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: zampto-screenshots-${{ github.run_id }}
-          path: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}/screenshots-${{ github.run_id }}.zip
+          path: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}/screenshots.zip
           retention-days: 7
 
       - name: 清理本地截图
