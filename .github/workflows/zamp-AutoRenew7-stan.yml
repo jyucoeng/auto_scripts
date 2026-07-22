@@ -2,7 +2,7 @@ name: 🔄 Zampto Auto-stan Renew
 
 on:
   schedule:
-    - cron: '01 */8 * * *'
+    - cron: '45 */8 * * *'
   workflow_dispatch:
 
 permissions:
@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     concurrency:
-      group: Zampto_Renew
+      group: Zampto_Renew-stan
       cancel-in-progress: false
     env:
       #格式:email,password,tg_token,tg_chat
