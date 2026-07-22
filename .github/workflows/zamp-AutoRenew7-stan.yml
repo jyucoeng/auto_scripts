@@ -17,13 +17,14 @@ jobs:
       group: Zampto_Renew
       cancel-in-progress: false
     env:
+      #格式:email,password,tg_token,tg_chat
       ZAMPTO_BATCH: ${{ secrets.ZAMPTO_BATCH_STAN }}
       # 支持协议: vless, vmess, trojan, ss, hy2, tuic, anytls, socks5
       PROXY_CONTENT: ${{ secrets.ZAMPTO_HY2_PROXY_URL }}
       SOCKS_PORT: ${{ secrets.SOCKS_PORT || '10808' }}
       SCREENSHOT_DIR: screenshots
       PROJECT_DIR: zampto-stan
-      PRIVATE_REPO: jyucoeng/zzm
+      PRIVATE_REPO: jyucoeng/auto_zampto_private
 
     steps:
       - name: 检出公开仓库
@@ -84,7 +85,7 @@ jobs:
 
       - name: 执行续期
         working-directory: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}
-        run: python Zampto_Renew7.py
+        run: python zampto-renew.py.py
 
       - name: 上传截图
         if: always()
