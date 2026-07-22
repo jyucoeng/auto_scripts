@@ -1,8 +1,8 @@
-name: Zampto 续期
+name: 🔄 Zampto Auto-stan Renew
 
 on:
   schedule:
-    - cron: '45 6,18 * * *'
+    - cron: '01 */8 * * *'
   workflow_dispatch:
 
 permissions:
@@ -12,17 +12,17 @@ permissions:
 jobs:
   renew:
     runs-on: ubuntu-latest
-    timeout-minutes: 50
+    timeout-minutes: 60
     concurrency:
       group: Zampto_Renew
       cancel-in-progress: false
     env:
-      ZAMPTO_BATCH: ${{ secrets.ZAMPTO_BATCH }}
+      ZAMPTO_BATCH: ${{ secrets.ZAMPTO_BATCH_STAN }}
       # 支持协议: vless, vmess, trojan, ss, hy2, tuic, anytls, socks5
       PROXY_CONTENT: ${{ secrets.ZAMPTO_HY2_PROXY_URL }}
       SOCKS_PORT: ${{ secrets.SOCKS_PORT || '10808' }}
       SCREENSHOT_DIR: screenshots
-      PROJECT_DIR: zampto
+      PROJECT_DIR: zampto-stan
       PRIVATE_REPO: jyucoeng/zzm
 
     steps:
