@@ -12,7 +12,7 @@ permissions:
 jobs:
   renew:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 50
     concurrency:
       group: Zampto_Renew
       cancel-in-progress: false
@@ -78,34 +78,22 @@ jobs:
 
       - name: 随机延迟
         run: |
-          echo "延迟 1 秒"
-          sleep 1
+          delay=$((RANDOM % 10))
+          echo "随机延迟: ${delay}秒"
+          sleep $delay
 
       - name: 执行续期
         working-directory: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}
-        env:
-          SCREENSHOT_DIR: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}/${{ env.SCREENSHOT_DIR }}
         run: python Zampto_Renew7.py
-
-      - name: 压缩截图
-        if: always()
-        working-directory: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}
-        run: |
-          if [ -d "${{ env.SCREENSHOT_DIR }}" ] && [ "$(ls -A ${{ env.SCREENSHOT_DIR }} 2>/dev/null)" ]; then
-            zip -r screenshots.zip ${{ env.SCREENSHOT_DIR }}/
-            echo "✅ 截图已压缩为 screenshots.zip"
-            ls -la screenshots.zip
-          else
-            echo "无截图，跳过压缩"
-          fi
 
       - name: 上传截图
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: zampto-screenshots-${{ github.run_id }}
-          path: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}/screenshots.zip
+          path: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}/${{ env.SCREENSHOT_DIR }}
           retention-days: 7
+          if-no-files-found: warn
 
       - name: 清理本地截图
         if: always()
