@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       phone:
-        description: "手机号（如 +506-63532545）"
+        description: "手机号（如 +506-63532000）"
         required: true
         type: string
       code:
