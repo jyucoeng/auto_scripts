@@ -57,7 +57,8 @@ jobs:
 
       - name: 安装系统依赖
         run: |
-          sudo apt-get update && sudo apt-get install -y xvfb fonts-noto-cjk ffmpeg
+          sudo apt-get update -o Acquire::http::Timeout=30
+          sudo apt-get install -y --no-install-recommends xvfb ffmpeg
 
       - name: 安装 Python 依赖
         run: |
