@@ -20,12 +20,9 @@ jobs:
       # ════════════════════════════════════════════════════════════════
       # Secrets（在公开 repo → Settings → Secrets 中配置）
       # ════════════════════════════════════════════════════════════════
-      # Telegram MTProto API（https://my.telegram.org）
-      TG_API_ID: ${{ secrets.TG_API_ID }}
-      TG_API_HASH: ${{ secrets.TG_API_HASH }}
-      # Telegram StringSession（运行私有仓库中 setup_tg_session.py 生成）
-      TG_SESSION: ${{ secrets.TG_SESSION }}
-      # hax.co.id 账号，每行一个：手机号格式（-不能少）+44-7594910002,tg_bot_token,tg_chat_id
+      # hax.co.id 账号，多个用分号分隔：
+      #   phone,tg_bot_token,tg_chat_id,tg_api_id,tg_api_hash,tg_session
+      #   TG 凭据（后三个字段）由每账号独立提供
       HAX_BATCH: ${{ secrets.HAX_BATCH }}
       # 代理（留空直连）
       PROXY_CONTENT: ${{ secrets.HAX_HY2_PROXY_URL }}
