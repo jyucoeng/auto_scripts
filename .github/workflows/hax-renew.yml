@@ -62,13 +62,7 @@ jobs:
       - name: 安装 Python 依赖
         run: |
           pip install --upgrade pip
-          if [ -f ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}/requirements.txt ]; then
-            pip install -r ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}/requirements.txt
-          else
-            pip install seleniumbase>=4.25.0 pyvirtualdisplay>=3.0 requests>=2.31.0
-            pip install telethon>=1.36.0 SpeechRecognition>=3.10.0 pydub>=0.25.1
-            pip install ddddocr nest_asyncio
-          fi
+          pip install -r ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}/requirements.txt
 
       - name: 安装代理
         working-directory: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}
@@ -89,7 +83,7 @@ jobs:
 
       - name: 随机延迟
         run: |
-          delay=$((RANDOM % 120))
+          delay=$((RANDOM % 1))
           echo "随机延迟: ${delay}秒"
           sleep $delay
 
