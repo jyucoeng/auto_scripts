@@ -24,12 +24,14 @@ jobs:
       #   phone,tg_bot_token,tg_chat_id,tg_api_id,tg_api_hash,tg_session
       #   TG 凭据（后三个字段）由每账号独立提供
       HAX_BATCH: ${{ secrets.HAX_BATCH }}
-      # 代理（留空直连）
+      # 代理
       PROXY_CONTENT: ${{ secrets.HAX_HY2_PROXY_URL }}
       SOCKS_PORT: ${{ secrets.SOCKS_PORT || '10808' }}
       # 可选
       SCREENSHOT_DIR: screenshots
       DEBUG_FLAG: "0"
+      # 一次续期最多可以切多少次warp ip，默认20次
+      MAX_RENEW_RETRIES: "30"
       # 私有仓库（含 hax-renew.py）
       PRIVATE_REPO: jyucoeng/auto_hax_private
       PROJECT_DIR: hax
@@ -58,12 +60,26 @@ jobs:
       - name: 安装系统依赖
         run: |
           sudo apt-get update -o Acquire::http::Timeout=30
-          sudo apt-get install -y --no-install-recommends xvfb ffmpeg
+          sudo apt-get install -y --no-install-recommends xvfb ffmpeg unzip curl wget jq ca-certificates
 
       - name: 安装 Python 依赖
         run: |
           pip install --upgrade pip
           pip install -r ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}/requirements.txt
+
+      - name: 启用 WARP
+        uses: fscarmen/warp-on-actions@v1.3
+        with:
+          stack: dual
+          mode: client
+
+      - name: 修复 DNS
+        run: |
+          sudo systemctl stop systemd-resolved 2>/dev/null || true
+          sudo systemctl disable systemd-resolved 2>/dev/null || true
+          sudo rm -f /etc/resolv.conf
+          echo -e "nameserver 1.1.1.1\nnameserver 8.8.8.8\nnameserver 1.0.0.1" \
+            | sudo tee /etc/resolv.conf
 
       - name: 安装代理
         working-directory: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}
