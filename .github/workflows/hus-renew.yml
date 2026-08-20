@@ -29,7 +29,7 @@ jobs:
       SOCKS_PORT: ${{ secrets.SOCKS_PORT || '10808' }}
       # 可选
       SCREENSHOT_DIR: screenshots
-      DEBUG_FLAG: "0"
+      DEBUG_FLAG: "1"
       # 续期重试次数（外层）
       MAX_RENEW_RETRIES: "1"
       # IP 被封时切换 WARP 重试次数（内层）
