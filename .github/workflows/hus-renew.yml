@@ -31,7 +31,7 @@ jobs:
       SCREENSHOT_DIR: screenshots
       DEBUG_FLAG: "0"
       # 一次续期最多可以切多少次warp ip，默认20次
-      MAX_RENEW_RETRIES: "30"
+      MAX_RENEW_RETRIES: "20"
       # 私有仓库（含 hus-renew.py）
       PRIVATE_REPO: jyucoeng/auto_hus_private
       PROJECT_DIR: hus
