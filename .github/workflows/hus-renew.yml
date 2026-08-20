@@ -34,11 +34,11 @@ jobs:
       MAX_RENEW_RETRIES: "1"
       # IP 被封时切换 WARP 重试次数（内层）
       #所以一共会重试3*5=15次
-      MAX_WARP_RETRIES: "5"
+      MAX_WARP_RETRIES: "10"
       # 登录重试次数
       MAX_LOGIN_RETRIES: "1"
       # 私有仓库（含 hus-renew.py）
-      PRIVATE_REPO: jyucoeng/auto_hus_private
+      PRIVATE_REPO: pingmike2/hus
       PROJECT_DIR: hus
 
     steps:
@@ -57,31 +57,55 @@ jobs:
           path: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}
           fetch-depth: 1
 
+      - name: 校验 HUS_BATCH
+        env:
+          HUS_BATCH: ${{ secrets.HUS_BATCH }}
+        run: |
+          python3 - <<'PY'
+          import os, sys
+          value = os.environ.get("HUS_BATCH", "").strip()
+          if not value:
+              raise SystemExit("HUS_BATCH 未设置或为空")
+          accounts = [x.strip() for x in value.replace("\\n", ";").split(";") if x.strip()]
+          if not accounts:
+              raise SystemExit("HUS_BATCH 没有有效账号")
+          for index, account in enumerate(accounts, 1):
+              fields = [x.strip() for x in account.split(",")]
+              if len(fields) < 6:
+                  raise SystemExit(f"HUS_BATCH 第 {index} 个账号字段不足：需要 phone,bot_token,chat_id,api_id,api_hash,session")
+              if any(not fields[i] for i in range(6)):
+                  raise SystemExit(f"HUS_BATCH 第 {index} 个账号存在空字段")
+          print(f"HUS_BATCH 预检通过：{len(accounts)} 个账号，凭据内容已隐藏")
+          PY
+
       - name: 设置 Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}/requirements.txt
 
-      - name: 安装系统依赖
-        run: |
-          sudo apt-get update -o Acquire::http::Timeout=30
-          sudo apt-get install -y --no-install-recommends xvfb ffmpeg unzip curl wget jq ca-certificates
+      - name: 缓存 Chromium apt 包
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/hus-apt/*.deb
+          key: apt-chromium-${{ runner.os }}-${{ runner.arch }}-v1
 
-      - name: 安装 Google Chrome (DrissionPage 需要真实 Chrome 二进制)
+      - name: 安装依赖
+        working-directory: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}
         run: |
-          wget -q "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" -O /tmp/chrome.deb
-          sudo apt-get install -y /tmp/chrome.deb
-          echo "CHROME_PATH=/usr/bin/google-chrome-stable" >> "$GITHUB_ENV"
-
-      - name: 安装 Python 依赖
-        run: |
+          mkdir -p "$HOME/.cache/hus-apt/partial"
+          sudo apt-get update
+          sudo apt-get -o Dir::Cache::archives="$HOME/.cache/hus-apt" \
+            install -y xvfb chromium ffmpeg unzip curl wget jq ca-certificates
           pip install --upgrade pip
-          pip install -r ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}/requirements.txt
+          pip install -r requirements.txt -q
+          python3 -c 'import speech_recognition, pydub, audioop; print("语音依赖导入成功")'
 
       - name: 启用 WARP
         uses: fscarmen/warp-on-actions@v1.3
         with:
-          stack: dual
+          stack: ipv4
           mode: client
 
       - name: 安装代理
@@ -109,7 +133,15 @@ jobs:
 
       - name: 执行续期
         working-directory: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}
-        run: python3 -u hus-renew.py 2>&1 | tee hus-renew.log
+        run: |
+          set -o pipefail
+          python3 -u hus-renew.py 2>&1 | tee hus-renew.log &
+          renew_pid=$!
+          while kill -0 "$renew_pid" 2>/dev/null; do
+            echo "[HEARTBEAT] 执行续期仍在运行: $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+            sleep 15
+          done
+          wait "$renew_pid"
 
       - name: 上传截图
         if: always()
@@ -141,23 +173,65 @@ jobs:
       - name: 提交执行时间
         if: always()
         run: |
+          set -e
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          mkdir -p ${{ env.PROJECT_DIR }} && echo "$(date +'%Y-%m-%d %H:%M:%S')" > ${{ env.PROJECT_DIR }}/time.txt
-          git add ${{ env.PROJECT_DIR }}/time.txt 2>/dev/null || true
-          if git diff --cached --quiet; then
-            echo "无变化，无需提交"
-          else
-            git commit -m "更新时间文件: $(date +'%Y-%m-%d %H:%M:%S')"
-            git pull --rebase origin main
-            git push origin HEAD:main
-          fi
 
-      - name: 清理旧运行
-        uses: Mattraks/delete-workflow-runs@v2
-        with:
-          token: ${{ github.token }}
-          repository: ${{ github.repository }}
-          delete_workflow_pattern: ${{ github.workflow }}
-          retain_days: 2
-          keep_minimum_runs: 5
+          # time.txt 可能被并发的 schedule/手动 run 同时更新。
+          # 每次以最新 origin/main 为基准重建提交，避免 pull --rebase 产生内容冲突。
+          for attempt in 1 2 3; do
+            echo "提交执行时间，第 ${attempt}/3 次尝试"
+            git fetch origin refs/heads/main:refs/remotes/origin/main
+            git reset --hard origin/main
+            mkdir -p "${{ env.PROJECT_DIR }}"
+            date +'%Y-%m-%d %H:%M:%S' > "${{ env.PROJECT_DIR }}/time.txt"
+            git add "${{ env.PROJECT_DIR }}/time.txt"
+            git commit -m "更新时间文件: $(date +'%Y-%m-%d %H:%M:%S')"
+            if git push origin HEAD:refs/heads/main; then
+              echo "执行时间已提交"
+              exit 0
+            fi
+            echo "推送发生并发冲突，重新获取远端后重试"
+            git reset --hard origin/main
+            sleep 2
+          done
+          echo "3 次推送均失败"
+          exit 1
+
+      - name: 🧹 清理旧的工作流运行记录
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set +e
+          current_run="${{ github.run_id }}"
+          cutoff_epoch=$(date -d '24 hours ago' +%s)
+          runs=$(gh run list \
+            --repo "$GITHUB_REPOSITORY" \
+            --workflow="hus-renew.yml" \
+            --limit=100 \
+            --json databaseId,createdAt,status,conclusion \
+            --jq '.[] | [.databaseId, .createdAt, .status, (.conclusion // "")] | @tsv' 2>/dev/null)
+          if [ -z "$runs" ]; then
+            echo "没有找到可清理的运行记录"
+            exit 0
+          fi
+          while IFS=$'\t' read -r run_id created_at status conclusion; do
+            [ -z "$run_id" ] && continue
+            if [ "$run_id" = "$current_run" ]; then
+              echo "保留当前运行记录: $run_id"
+              continue
+            fi
+            created_epoch=$(date -d "$created_at" +%s 2>/dev/null || echo 0)
+            if [ "$created_epoch" -ge "$cutoff_epoch" ]; then
+              echo "保留 24 小时内记录: $run_id ($created_at)"
+              continue
+            fi
+            if [ "$status" != "completed" ]; then
+              echo "保留未完成记录: $run_id (status=$status)"
+              continue
+            fi
+            echo "删除超过 24 小时的已完成记录: $run_id (created=$created_at, conclusion=$conclusion)"
+            gh run delete "$run_id" --repo "$GITHUB_REPOSITORY" || true
+          done <<< "$runs"
+          echo "清理完成：保留最近 24 小时记录及所有未完成记录"
