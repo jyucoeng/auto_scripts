@@ -34,11 +34,11 @@ jobs:
       MAX_RENEW_RETRIES: "1"
       # IP 被封时切换 WARP 重试次数（内层）
       #所以一共会重试3*5=15次
-      MAX_WARP_RETRIES: "10"
+      MAX_WARP_RETRIES: "5"
       # 登录重试次数
       MAX_LOGIN_RETRIES: "1"
       # 私有仓库（含 hus-renew.py）
-      PRIVATE_REPO: pingmike2/hus
+      PRIVATE_REPO: jyucoeng/auto_hus_private
       PROJECT_DIR: hus
 
     steps:
