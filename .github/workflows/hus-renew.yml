@@ -31,7 +31,7 @@ jobs:
       SCREENSHOT_DIR: screenshots
       DEBUG_FLAG: "0"
       # 续期重试次数（外层）
-      MAX_RENEW_RETRIES: "3"
+      MAX_RENEW_RETRIES: "1"
       # IP 被封时切换 WARP 重试次数（内层）
       #所以一共会重试3*5=15次
       MAX_WARP_RETRIES: "5"
