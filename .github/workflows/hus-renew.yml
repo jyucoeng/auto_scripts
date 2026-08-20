@@ -67,6 +67,12 @@ jobs:
           sudo apt-get update -o Acquire::http::Timeout=30
           sudo apt-get install -y --no-install-recommends xvfb ffmpeg unzip curl wget jq ca-certificates
 
+      - name: 安装 Google Chrome (DrissionPage 需要真实 Chrome 二进制)
+        run: |
+          wget -q "https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb" -O /tmp/chrome.deb
+          sudo apt-get install -y /tmp/chrome.deb
+          echo "CHROME_PATH=/usr/bin/google-chrome-stable" >> "$GITHUB_ENV"
+
       - name: 安装 Python 依赖
         run: |
           pip install --upgrade pip
