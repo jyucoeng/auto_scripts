@@ -153,5 +153,5 @@ jobs:
           token: ${{ github.token }}
           repository: ${{ github.repository }}
           delete_workflow_pattern: ${{ github.workflow }}
-          retain_days: 7
+          retain_days: 2
           keep_minimum_runs: 5
