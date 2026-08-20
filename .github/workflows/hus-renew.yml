@@ -106,7 +106,7 @@ jobs:
 
       - name: 执行续期
         working-directory: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}
-        run: python3 hus-renew.py
+        run: python3 hus-renew.py 2>&1 | tee hus-renew.log
 
       - name: 上传截图
         if: always()
@@ -114,6 +114,15 @@ jobs:
         with:
           name: hus-screenshots-${{ github.run_id }}
           path: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}/${{ env.SCREENSHOT_DIR }}
+          retention-days: 7
+          if-no-files-found: warn
+
+      - name: 上传日志
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hus-renew-log-${{ github.run_id }}
+          path: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}/hus-renew.log
           retention-days: 7
           if-no-files-found: warn
 
