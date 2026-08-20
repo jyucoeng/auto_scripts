@@ -106,7 +106,7 @@ jobs:
 
       - name: 执行续期
         working-directory: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}
-        run: python3 hus-renew.py 2>&1 | tee hus-renew.log
+        run: python3 -u hus-renew.py 2>&1 | tee hus-renew.log
 
       - name: 上传截图
         if: always()
