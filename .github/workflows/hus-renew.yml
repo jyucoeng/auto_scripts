@@ -44,7 +44,7 @@ jobs:
       # 登录重试次数
       MAX_LOGIN_RETRIES: "1"
       # 私有仓库（含 hus-renew.py）
-      PRIVATE_REPO: pingmike2/hus
+      PRIVATE_REPO: jyucoeng/auto_hus_private
       PROJECT_DIR: hus
 
     steps:
