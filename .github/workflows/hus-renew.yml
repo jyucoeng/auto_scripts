@@ -158,15 +158,6 @@ jobs:
           retention-days: 7
           if-no-files-found: warn
 
-      - name: 上传页面 HTML / 可读文本
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: hus-html-${{ github.run_id }}
-          path: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}/**/*.{html,txt}
-          retention-days: 7
-          if-no-files-found: warn
-
       - name: 上传日志
         if: always()
         uses: actions/upload-artifact@v4
