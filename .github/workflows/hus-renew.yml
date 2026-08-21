@@ -26,12 +26,12 @@ jobs:
       HUS_BATCH: ${{ secrets.HUS_BATCH }}
       # 代理
       PROXY_CONTENT: ${{ secrets.HUS_HY2_PROXY_URL }}
-      SOCKS_PORT: ${{ secrets.SOCKS_PORT || '10808' }}
+      SOCKS_PORT: ${{ secrets.SOCKS_PORT || '16888' }}
       # 可选
       SCREENSHOT_DIR: screenshots
       DEBUG_FLAG: "1"
       # ══════════════════════════════════════════════════════════════
-      # 重试参数（三层，关系是"调用"关系：外层每轮 → 中层每次换IP → 内层多轮重注册）
+      # 重试参数（三层，关系是"调用"关系：外层每轮 → 中层每次重启Wrap换IP → 内层多轮筛选是否ip已被使用）
       # ══════════════════════════════════════════════════════════════
       # 【外层】整个续期流程（登录→进页面→解验证码→提交）失败后整体重跑几次。
       #   实际执行 = 该值 + 1 次；每次重跑都重新登录、重新等 TG 验证码。
@@ -162,6 +162,15 @@ jobs:
           path: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}/${{ env.SCREENSHOT_DIR }}
           retention-days: 7
           if-no-files-found: warn
+
+      - name: 上传 dumphtml 页面快照
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hus-dumphtml-${{ github.run_id }}
+          path: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}/${{ env.SCREENSHOT_DIR }}/dumphtml
+          retention-days: 7
+          if-no-files-found: ignore
 
       - name: 上传日志
         if: always()
