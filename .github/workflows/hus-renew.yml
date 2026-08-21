@@ -2,7 +2,7 @@ name: 🔄 Hus Auto Renew
 
 on:
   schedule:
-    - cron: '06 0 * * *'  #每天UTC 00:06 
+    - cron: '07 0 * * *'  #每天UTC 00:06 
   workflow_dispatch:
 
 permissions:
