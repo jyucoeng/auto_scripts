@@ -2,7 +2,7 @@ name: 🔄 Hus Auto Renew
 
 on:
   schedule:
-    - cron: '08 */12 * * *'
+    - cron: '06 1,13 * * *'  #每天UTC 01:06 和 13:06
   workflow_dispatch:
 
 permissions:
@@ -133,7 +133,7 @@ jobs:
 
       - name: 随机延迟
         run: |
-          delay=$((RANDOM % 1))
+          delay=$((RANDOM % 10))
           echo "随机延迟: ${delay}秒"
           sleep $delay
 
