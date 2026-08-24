@@ -2,7 +2,7 @@ name: 🔄 Zampto Auto-stan Renew
 
 on:
   schedule:
-    - cron: '45 */8 * * *'
+    - cron: '45 00 * * *'
   workflow_dispatch:
 
 permissions:
