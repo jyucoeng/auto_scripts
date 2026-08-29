@@ -69,23 +69,26 @@ jobs:
           if [ -f requirements.txt ]; then
             pip install -r requirements.txt
           else
-            pip install requests seleniumbase pyvirtualdisplay
+            pip install requests seleniumbase pyvirtualdisplay ddddocr
           fi
 
-      # 步骤 6: 安装 Hysteria2（如果需要代理）
-      - name: 📡 安装 Hysteria2
+      # 步骤 6: 安装 sing-box（如果需要代理）
+      - name: 📡 安装 sing-box
+        working-directory: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}
         run: |
-          if [ -n "${{ env.HY2_PROXY_URL }}" ]; then
-            echo "安装 Hysteria2..."
-            curl -L -o hysteria \
-              https://github.com/apernet/hysteria/releases/latest/download/hysteria-linux-amd64
-            chmod +x hysteria
-            sudo mv hysteria /usr/local/bin/hysteria
-            hysteria version
-            echo "✅ Hysteria2 安装完成"
-          else
-            echo "⚠️ 未配置代理，跳过 Hysteria2 安装"
+          if [ -z "${{ env.HY2_PROXY_URL }}" ]; then
+            echo "⚠️ 未配置代理，跳过 sing-box 安装"
+            exit 0
           fi
+
+          SB_VER="1.13.14"
+          ARCHIVE="sing-box-${SB_VER}-linux-amd64.tar.gz"
+          wget -q "https://github.com/SagerNet/sing-box/releases/download/v${SB_VER}/${ARCHIVE}"
+          tar -xzf "$ARCHIVE" -C /tmp/
+          mv "/tmp/sing-box-${SB_VER}-linux-amd64/sing-box" ./sing-box
+          chmod +x ./sing-box
+          rm -rf "/tmp/sing-box-${SB_VER}-linux-amd64" "$ARCHIVE"
+          echo "[INFO] sing-box $(./sing-box version | head -1)"
 
       # 步骤 7: 添加随机延迟
       - name: ⏳ 添加随机延迟
