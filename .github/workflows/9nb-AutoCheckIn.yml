@@ -26,15 +26,15 @@ jobs:
       SOCKS_PORT: ${{ secrets.SOCKS_PORT || '10808' }}
       PROJECT_DIR: 9nb
       PRIVATE_REPO: jyucoeng/9nb_auto_private
-      # 持久化 cookie 到公开库 tokens/ 目录（随提交跨运行保留，减少重复登录）
-      9NB_COOKIE_DB: ${{ github.workspace }}/tokens/9nb_cookies.db
+      # 持久化 cookie 到公开库 9nb/ 目录（与 time.txt 同目录，随提交跨运行保留）
+      9NB_COOKIE_DB: ${{ github.workspace }}/${{ env.PROJECT_DIR }}/9nb_cookies.db
 
     steps:
       - name: 检出公开仓库
         uses: actions/checkout@v4
 
       - name: 创建输出目录
-        run: mkdir -p ${{ env.PROJECT_DIR }}
+        run: mkdir -p ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}
 
       - name: 检出私有仓库
         uses: actions/checkout@v4
@@ -42,7 +42,7 @@ jobs:
           repository: ${{ env.PRIVATE_REPO }}
           token: ${{ secrets.PRIVATE_REPO_TOKEN }}
           ref: main
-          path: ${{ env.PROJECT_DIR }}
+          path: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}
           fetch-depth: 1
 
       - name: 设置 Python
@@ -51,13 +51,13 @@ jobs:
           python-version: '3.11'
 
       - name: 安装 Python 依赖
-        working-directory: ${{ env.PROJECT_DIR }}
+        working-directory: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: 安装代理
-        working-directory: ${{ env.PROJECT_DIR }}
+        working-directory: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}
         run: |
           if [ -z "$PROXY_CONTENT" ]; then
             echo "[INFO] 未配置代理，直连模式"
@@ -79,7 +79,7 @@ jobs:
           sleep $delay
 
       - name: 执行 9NB 每日签到
-        working-directory: ${{ env.PROJECT_DIR }}
+        working-directory: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}
         run: python 9nb-checkin.py
 
       - name: 提交执行时间
@@ -87,8 +87,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          echo "$(date +'%Y-%m-%d %H:%M:%S')" > time.txt
-          git add time.txt tokens/9nb_cookies.db 2>/dev/null || true
+          mkdir -p ${{ env.PROJECT_DIR }} && echo "$(date +'%Y-%m-%d %H:%M:%S')" > ${{ env.PROJECT_DIR }}/time.txt
+          git add ${{ env.PROJECT_DIR }}/time.txt ${{ env.PROJECT_DIR }}/9nb_cookies.db 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "无变化，无需提交"
           else
