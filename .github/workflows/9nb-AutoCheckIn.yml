@@ -1,0 +1,106 @@
+name: 🎮 9NB Auto CheckIn
+
+on:
+  schedule:
+    - cron: '43 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  renew:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    concurrency:
+      group: 9nb
+      cancel-in-progress: true
+    env:
+      #格式:username,password,tg_token,tg_chat（多账号用 ; 分隔） 多账号用英文分号分隔
+      9NB_BATCH: ${{ secrets.NB_BATCH }}
+      # cookie 强加密密钥（用户自行提供，用于加密 9nb_cookies.db）
+      9NB_COOKIE_ENCODE_KEY: ${{ secrets.NB_COOKIE_ENCODE_KEY }}
+      # 代理（跳过则直连；支持协议: vless, vmess, trojan, ss, hy2, tuic, anytls, socks5）
+      PROXY_CONTENT: ${{ secrets.HY2_PROXY_URL }}
+      SOCKS_PORT: ${{ secrets.SOCKS_PORT || '10808' }}
+      PROJECT_DIR: 9nb
+      PRIVATE_REPO: jyucoeng/9nb_auto_private
+      # 持久化 cookie 到公开库 9nb/ 目录（随提交跨运行保留，减少重复登录）
+      9NB_COOKIE_DB: ${{ github.workspace }}/9nb/9nb_cookies.db
+
+    steps:
+      - name: 检出公开仓库
+        uses: actions/checkout@v4
+
+      - name: 创建输出目录
+        run: mkdir -p ${{ env.PROJECT_DIR }}
+
+      - name: 检出私有仓库
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.PRIVATE_REPO }}
+          token: ${{ secrets.PRIVATE_REPO_TOKEN }}
+          ref: main
+          path: ${{ env.PROJECT_DIR }}
+          fetch-depth: 1
+
+      - name: 设置 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 安装 Python 依赖
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 安装代理
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: |
+          if [ -z "$PROXY_CONTENT" ]; then
+            echo "[INFO] 未配置代理，直连模式"
+            exit 0
+          fi
+          SB_VER="1.13.14"
+          ARCHIVE="sing-box-${SB_VER}-linux-amd64.tar.gz"
+          wget -q "https://github.com/SagerNet/sing-box/releases/download/v${SB_VER}/${ARCHIVE}"
+          tar -xzf "$ARCHIVE" -C /tmp/
+          mv "/tmp/sing-box-${SB_VER}-linux-amd64/sing-box" ./sing-box
+          chmod +x ./sing-box
+          rm -rf "/tmp/sing-box-${SB_VER}-linux-amd64" "$ARCHIVE"
+          echo "[INFO] sing-box $(./sing-box version | head -1)"
+
+      - name: 随机延迟
+        run: |
+          delay=$((RANDOM % 120))
+          echo "随机延迟: ${delay}秒"
+          sleep $delay
+
+      - name: 执行 9NB 每日签到
+        working-directory: ${{ env.PROJECT_DIR }}
+        run: python 9nb-checkin.py
+
+      - name: 提交执行时间
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          echo "$(date +'%Y-%m-%d %H:%M:%S')" > ${{ env.PROJECT_DIR }}/time.txt
+          git add ${{ env.PROJECT_DIR }}/time.txt ${{ env.PROJECT_DIR }}/9nb_cookies.db 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "无变化，无需提交"
+          else
+            git commit -m "更新时间文件: $(date +'%Y-%m-%d %H:%M:%S')"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
+
+      - name: 清理旧运行
+        uses: Mattraks/delete-workflow-runs@v2
+        with:
+          token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          delete_workflow_pattern: ${{ github.workflow }}
+          retain_days: 1
+          keep_minimum_runs: 2
