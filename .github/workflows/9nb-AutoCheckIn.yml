@@ -26,8 +26,8 @@ jobs:
       SOCKS_PORT: ${{ secrets.SOCKS_PORT || '10808' }}
       PROJECT_DIR: 9nb
       PRIVATE_REPO: jyucoeng/9nb_auto_private
-      # 持久化 cookie 到公开库 9nb/ 目录（随提交跨运行保留，减少重复登录）
-      9NB_COOKIE_DB: ${{ github.workspace }}/9nb/tokens/9nb_cookies.db
+      # 持久化 cookie 到公开库 tokens/ 目录（随提交跨运行保留，减少重复登录）
+      9NB_COOKIE_DB: ${{ github.workspace }}/tokens/9nb_cookies.db
 
     steps:
       - name: 检出公开仓库
@@ -87,8 +87,8 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          echo "$(date +'%Y-%m-%d %H:%M:%S')" > ${{ env.PROJECT_DIR }}/time.txt
-          git add ${{ env.PROJECT_DIR }}/time.txt ${{ env.PROJECT_DIR }}/tokens/9nb_cookies.db 2>/dev/null || true
+          echo "$(date +'%Y-%m-%d %H:%M:%S')" > time.txt
+          git add time.txt tokens/9nb_cookies.db 2>/dev/null || true
           if git diff --cached --quiet; then
             echo "无变化，无需提交"
           else
