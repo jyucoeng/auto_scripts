@@ -27,7 +27,7 @@ jobs:
       PROJECT_DIR: 9nb
       PRIVATE_REPO: jyucoeng/9nb_auto_private
       # 持久化 cookie 到公开库 9nb/ 目录（与 time.txt 同目录，随提交跨运行保留）
-      9NB_COOKIE_DB: ${{ github.workspace }}/${{ env.PROJECT_DIR }}/9nb_cookies.db
+      9NB_COOKIE_DB: ${{ github.workspace }}/9nb/9nb_cookies.db
 
     steps:
       - name: 检出公开仓库
