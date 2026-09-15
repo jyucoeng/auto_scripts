@@ -51,6 +51,7 @@ jobs:
           python-version: '3.11'
 
       - name: 安装 Python 依赖
+        working-directory: ${{ env.PROJECT_DIR }}
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
