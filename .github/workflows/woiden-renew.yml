@@ -36,7 +36,7 @@ jobs:
     concurrency:
       group: Woiden_Renew
       # 手动触发不应该取消正在跑的定时任务——那会把正在续期的账号打断在半路。
-      cancel-in-progress: false
+      cancel-in-progress: true
     env:
       # ── Secrets ──────────────────────────────────────────────────────
       # 注意：这里不能用 BATCH / PROXY_URL —— 仓库里没有这两个 secret（只有

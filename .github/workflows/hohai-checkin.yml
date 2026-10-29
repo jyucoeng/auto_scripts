@@ -97,8 +97,24 @@ jobs:
           HOHAI_BATCH: ${{ secrets.HOHAI_BATCH }}
           HY2_PROXY_URL: ${{ secrets.HY2_PROXY_URL }}
           SOCKS_PORT: ${{ secrets.SOCKS_PORT || '51080' }}
-        run: xvfb-run -a python ${{ env.SCRIPT_NAME }}
+        run: |
+          mkdir -p logs
+          set -o pipefail
+          xvfb-run -a python ${{ env.SCRIPT_NAME }} 2>&1 | tee "logs/run-$(date +%Y%m%d-%H%M%S).log"
         working-directory: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}
+
+      # 步骤 7.5: 上传运行日志
+      # 多账号连续跑时第二个账号偶发签到失败，怀疑是同一出口 IP 被限流。
+      # 代码里已把 API 的 HTTP 状态码打进日志（429=限流 / 401=掉登录），
+      # 保留 14 天，攒几次运行记录后再回头看看到底是哪一类。
+      - name: 📤 上传运行日志
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hohai-log-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ github.repository_owner }}-${{ github.event.repository.name }}-${{ env.PROJECT_DIR }}/logs/
+          retention-days: 14
+          if-no-files-found: warn
 
       # 步骤 8: 提交时间文件到公开库
       - name: ⏱️ 提交时间文件
