@@ -237,18 +237,24 @@ jobs:
           # 这里改用重定向 + wait 真实 PID，并把日志尾部回显到 job 输出。
           python3 -u "${{ env.SCRIPT_NAME }}" > "${{ env.SCRIPT_NAME }}.log" 2>&1 &
           renew_pid=$!
-          while kill -0 "$renew_pid" 2>/dev/null; do
-            echo "[HEARTBEAT] 执行续期仍在运行: $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-            sleep 15
-          done
+          # 不打 HEARTBEAT：GitHub Actions 没有「无输出即超时」的机制，job 只要进程
+          # 还活着就会一直跑（上限由 timeout-minutes 控制）。每 15 秒一行心跳只会把
+          # 真正的日志淹掉，出问题时反而要多翻几十行才能找到关键行。
           # 注意：job 默认 `bash -e`，`wait` 返回非 0 会让 shell 当场退出，
           # 后面的退出码回显和日志尾部全都打不出来（失败时反而没有诊断信息）。
           # 这里显式兜住退出码。
           status=0
           wait "$renew_pid" || status=$?
           echo "---- ${{ env.SCRIPT_NAME }} 退出码: ${status} ----"
-          echo "---- 日志尾部（最后 80 行）----"
-          tail -n 80 "${{ env.SCRIPT_NAME }}.log" || true
+          # 失败时把完整日志铺出来：tail 80 常常正好把最早的致命错误截掉
+          # （ImportError / NameError 这类都发生在启动阶段）。成功时保持精简。
+          if [ "$status" -ne 0 ]; then
+            echo "---- 日志全文（退出码 ${status}，完整输出）----"
+            cat "${{ env.SCRIPT_NAME }}.log" || true
+          else
+            echo "---- 日志尾部（最后 80 行）----"
+            tail -n 80 "${{ env.SCRIPT_NAME }}.log" || true
+          fi
           exit "$status"
 
       - name: 上传截图
